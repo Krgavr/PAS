@@ -1,0 +1,620 @@
+---
+title: "Poznámky zápočet PAS"
+author: "Kristina Gavrina"
+format: html
+editor: visual
+---
+
+## Knihovny
+
+```{r}
+library(DescTools)
+
+```
+
+# Typy promennych
+
+```{r}
+### ciselne 
+
+# ciselne spojite 
+#Hodnota nejakeho intervalu(vaha, vyska)
+
+ciselne_spojite <- c(1.2, 0.3, 4.6)
+
+# ciselna diskretni 
+# cela cisla ( pocet lidi, vek )
+ciselne_diskretni <- c(1, 3, 4, 5)
+
+
+### Kategoricke 
+
+# nominalni - neusporadane ( barva oci, kraj, mesto)
+
+# ordinalni - usporadane (znamka, cislo na kostce)
+
+```
+
+## Jak popisujeme promenny
+
+```{r}
+### statisticke polohy
+
+# - prumer mean()
+# - median 
+# kvartyly, extremy 
+# absolutni/relativni cetnosti + Kumulativni soucet (cumsum())
+
+### sttasticke variability 
+
+# - royptyl -> var()
+# - smwrodatna odchylka -> sd()
+# - mezikvartilove rozpeti -> IQR()
+# - variacni koeficient 
+# - medianova absolutni odchylka MAD()
+# - modus 
+
+summary(sloupec)
+# kdyz prumer = medianu -> mame symetricke rozdeleni 
+
+### Tvar rozdeleni 
+
+## sikmost Skew()
+# s<0 -> zaporna, levostranne zasikmeni
+# s=0 -> nulova, simetricke rozdeleni 
+# s>0 -> kladna, pravostranne zasikmeni 
+
+## spicatost Kurt()
+# s<0 -> zaporna, platykurticke rozdeleni
+# s=0 -> nulova, mezokurticke rozdeleni 
+# s>0 -> kladna, letokurticke rozdeleni 
+```
+
+# Odlehle pozorovani
+
+```{r}
+# 1. Nakreslete boxplot. Pokud jsou v něm kolečka, pak jsou adepty na odlehly hodnoty. 
+boxplot(gpaadj, 
+        main = 'boxplot prumernych skoru z matematickych testu',
+        ylab = 'prumerne skore')
+
+# 2. Urcujeme adepty na odlehle hodnoty
+#pomoci mezikvartiloveho rozpeti IQR
+# Dolni odlehle pozorovani 
+DM <- quantile(gpaadj, 0.25 ) - 1.5*IQR(gpaadj)
+# Horni odlehle pozorovani 
+HM <- quantile(gpaadj, 0.25 ) + 1.5*IQR(gpaadj)
+# vypisujeme vysledky 
+gpaadj[gpaadj < DM]
+gpaadj[gpaadj > HM]
+
+#pomoci smerodatne odhylky sd()
+# Dolni odlehle pozorovani 
+DM <- mean(gpaadj) - 3*sdgpaadj
+# Horni odlehle pozorovani 
+HM <- qmean(gpaadj) + 3*sdgpaadj
+# vypisujeme vysledky 
+gpaadj[gpaadj < DM]
+gpaadj[gpaadj > HM]
+
+# 3. # 2. Urcujeme urcite odlehle hodnoty
+#pomoci mezikvartiloveho rozpeti IQR
+# Dolni odlehle pozorovani 
+DM <- quantile(gpaadj, 0.25 ) - 3*IQR(gpaadj)
+# Horni odlehle pozorovani 
+HM <- quantile(gpaadj, 0.25 ) + 3*IQR(gpaadj)
+# vypisujeme vysledky 
+gpaadj[gpaadj < DM]
+gpaadj[gpaadj > HM]
+
+#pomoci smerodatne odhylky sd()
+# Dolni odlehle pozorovani 
+DM <- mean(gpaadj) - 4*sdgpaadj
+# Horni odlehle pozorovani 
+HM <- qmean(gpaadj) + 4*sdgpaadj
+# vypisujeme vysledky 
+gpaadj[gpaadj < DM]
+gpaadj[gpaadj > HM]
+
+```
+
+
+# Urceni modusu 
+```{r}
+###pro ciselnou spojitou promnennou modus hleda y jadroveho odhadu hustoty 
+#1. Spocitame jadrovy odhad hustoty 
+jadro <- density(sloupec)
+#2. kreslime histogram 
+hist(sloupec, col = 'green', main ='histogram', xlab = '', ylab ='', freq=F)
+# pokud mame malo pozoravani zvetsujeme pocet sloupcu 
+hist(sloupec, col = 'green', main ='histogram', xlab = '', ylab ='', freq=F, breaks=5)
+#3. kreslime primku jadroveho odchadu 
+lines(jadro)
+#4. hledame vrhol jadroveho odchadu 
+jadro$x[which.max(jadro$y)]
+
+
+#pokud po nakreslini histogramu a kreslini primky jadroveho odchadu spatne vidime modus 
+# zvetsujepe pocet sloupcu v histogramu pomoci breaks 
+hist(sloupec, col = 'green', main ='histogram', xlab = '', ylab ='', freq=F, breaks=5)
+#musime zhlazujeme primku jadroveho odchadu pomoci bw 
+jadro<-density(sloupec, bw=10)
+lines(jadro, col =4)
+
+
+
+
+### modus pro diskretni promnennou 
+#1. kreslime histogram 
+hist(sloupec, col = 'green', main ='histogram', xlab = '', ylab ='', freq=F)
+#2 дщстаем из гистограма границы столбцов 
+meze<-hist(sloupec, plot=F)$breaks
+#достаем из гистограма значения частоты каждого столбца 
+pocty <- hist(sloupec, plot=F)$counts
+# достаем из гистограма наибольшее значение частоты 
+m <- which.max(pocty)
+# zacatek nejvyssiho sloupce 
+A<- meze[m]
+# vypocitame vysku sloupce
+h<- meze[m]-meze[m-1]
+# pocitame d0 a d1
+d0 <- pocty[m]-pocty[m-1]
+d1 <- pocty[m]-pocty[m+1]
+#vypocitame mosud podle vzorce 
+modus<- A+h*d0/(d0+d1)
+```
+
+
+# Testovani hypotez
+
+```{r}
+# Pred testem musime stanovit
+#   testovane hypotezy: nulovou (H0) a alternativni (H1)
+#   hladinu vyznamnosti (nejcasteji alfa = 0.05)
+# Vyhodnoceni pomoci p-hodnoty
+#   p-hodnota <= alfa => H0 zamitame, plati H1
+#   p-hodnota > alfa => H0 nezamitame
+
+```
+
+# Vztah dvou ciselnych promennych
+
+```{r}
+# matice bodovych grafu 
+
+# 1 divame se na rozptylovy graf 
+#   pokud puntiky lezi na primce tak tam je zavislost 
+# 2 vypocitame korelacni koeficient 
+#  cor = 1 -> silna prima zavislost
+#  cor = 0 -> neni zavislost
+#  cor = -1 -> silna neprima zavislost 
+
+```
+
+
+#### pomoci Korelacniho koeficientu
+
+```{r}
+# 1) Kreslime rozptylovy graf 
+plot(sloupec1~sloupec2, pch=19, main ='Nazev grafu', xlab = 'Nazev x osy', ylab = 'Nazev y osy')
+# 2) Kreslime primku linearni zavislosti 
+abline(lm(sloupec1~sloupec2), col=2, lwd=2)
+# 3) Vypocet korelacniho koeficientu 
+cor(sloupec1, sloupec2, use ='complete.obs')
+# cor=0 -> neni zavislost, cor=1 -> silna kladna zavislost, cor=-1 -> silna zaporna zavislost # 4) Korelacni test
+cor.test(sloupec1, sloupec2)
+# H0: cor = 0 -> promenne spolu linearne nesouvisi
+# H1: cor != 0 -> promenne spolu souvisi
+```
+
+#### Chi-kvadrat test a Fisheruv exaktni test
+
+```{r}
+#vstupem do chi-kvadrat testu muse byt tabulka absolutnich cetnosti, nebo primo dvojice promennych
+chisq.test(sloupec1, sloupec2) 
+```
+
+```{r}
+# tab <- tabulka absolutni cetnosti 
+# prikaz pro vypocet chi-kvadrat testu je chisq.test
+chisq.test(tab) 
+
+chisq.test(tab)$obs #realni cetnosti 
+chisq.test(tab)$exp #ocekavane cetnosti 
+
+```
+
+Pokud máme takové upozornění po spuštění chi testu, tak to znamena, že všechy očekavané četnosti nejsou větší než 5
+
+```{r}
+#Warning message:
+#In chisq.test(tab) : Chi-squared approximation may be incorrect
+```
+
+A musíme použit Fisheruv exaktní test
+
+```{r}
+fisher.test(valce, rychlosti) 
+```
+
+```{r}
+fisher.test(tab)
+# p-hodnota testu vysla 0.9174 > alfa => nezamitame H0
+# souvislost mezi barvou vlasu a pohlavim se neprokazala
+```
+
+# Vypocty pravdepodobnosti
+
+# Diskretni rozdeleni
+
+## Binomicke rozdeleni
+
+Náhodný pokus. 2 možnostií vzsledku (úspěch - neúspěch)
+
+\
+k- pocet uspechu
+
+n - pocet pokusu
+
+p - pravdepodobnost uspechu
+
+```{r}
+# dbinom(k,n,p) - pravdepodobnostni funkce
+```
+
+```{r}
+# pbinom(k,n,p) - distribucni funkce
+```
+
+## Hypergeometricke rozdeleni
+
+Nahodny vyber bez vraceni\
+
+dhyper(k,w,b,n) - pravdepodobnostni funcke p(x = h)
+
+```{r}
+# k - pocet uspechu, ktery nas zajima 
+# w - pocet uspechu v osudi
+# b - pocet neuspechu v osudi 
+# n - pocet tazenych kouli
+
+# priklad 21
+#pravdepodobnostni  fce: p(x>=1) => 1- p(x=0)
+k <- 0
+w <- 11
+b <- 100 -11
+n <- 10
+vysledek <- 1- dhyper(k, w,  b, n)
+vysledek
+```
+
+phyper(k,w,b,n) - distribucni funkce p(x\<=h)
+
+```{r}
+# priklad 16 
+# distribucni fce: p(x>=3) => 1-p(<=2)
+k <- 2
+w <- 15
+b <- 25-15
+n <- 5
+vysledek <- 1- phyper(k, w,  b, n)
+vysledek
+```
+
+## Geometricke rozdeleni
+
+Popisuje počet pokusů potřebných k prvnímu úspěchu v sérii nezávislých pokusů s konstantní pravděpodobností úspěchu.
+
+dgeom(k,p) - pravdepodobnostni funcke
+
+```{r}
+# p - pravdepodobnost uspechu
+# k - pocet neuspechu pred prvnim uspechem
+
+# p(x=5) -> k = 5 
+dgeom(5 , p)
+```
+
+pgeom(k,p) - distribucni
+
+```{r}
+# p(x<=4) -> k = 4
+pgeom(4, p)
+```
+
+## Poissonovo rozdělení
+
+Poissonovo rozdělení modeluje počet nezávislých událostí v daném intervalu s konstantní průměrnou četností.
+
+```{r}
+# dpois(k,lambda) - pravdepodobnostni funcke
+#lambda - stredni hodnota
+
+#b p(x=0)
+lambda <- 30/60 *5 # ocekavany pocet lidi za 5 minuty 
+dpois(0, lambda)
+
+```
+
+```{r}
+# ppois(k,lambda) - distribucni funkce
+```
+
+# Spojita rozdeleni
+
+## Normalni rozdeleni
+
+Gaussova krivka - symetricky tvar\
+
+```{r}
+# mu - stredni hodnota, sigma - smerodatna odchylka
+# pnorm(k,mu,sigma) - distribucni funkce
+
+# p(8<x<22) => p(x<=21) - P(x<=8)
+k1 <- 21 
+k2 <- 8
+mu <- 23
+sigma <- 5
+pnorm(k1, mu, sigma) - pnorm(k2,mu, sigma)
+
+```
+
+```{r}
+# qnorm(k,mu,sigma) - kvantilova funkce
+# P(X <= x) = 0.95
+qnorm(0.95, mu, sigma)
+```
+
+# Lognormalni rozdeleni
+
+Rozdělení, které vypadá jako normální, ale s ocáskem vlevo nebo vpravo.Pokud zlagoritmujeme, dostaneme normální rozdělení ln(sloupec) = norma. rozdeleni
+
+```{r}
+#stredni hodnota exp(mu+sigma^2/2)
+# rozptyl (exp(sigma^2)+2)*exp(2*mu+sigma^2)
+```
+
+plnorm(x,mu,sigma) - distribucni funkce
+
+```{r}
+
+```
+
+qlnorm(x,mu,sigma) - kvantilova funkce
+
+```{r}
+
+```
+
+# Exponenciální rozdělení
+
+Exponenciální rozdělení popisuje čas mezi po sobě jdoucími náhodnými událostmi, které se dějí s konstantní průměrnou rychlostí.
+
+rozdělení doby životnosti
+
+```{r}
+# pexp(x,int) - distribucni funkce
+
+# a) výrobek bude funkční alespoň 3000 dní
+# p(x>= 3000) => 1-p(x<=3000)
+intenzita<- 1/2000 # vypocitame intenzivitu ya jeden den 
+1 -pexp(3000, intenzita)
+```
+
+```{r}
+# qexp(x,int) - kvantilova funkce
+
+intenzita <- 1 / 2000
+# p(x<= t) = 0.05
+qexp(0.05, intenzita) 
+```
+
+# Testovani hypotez
+
+**Pred testem musime stanovit:**
+
+-   testovane hypotezy: nulovou (H0) a alternativni (H1)
+
+-   hladinu vyznamnosti (nejcasteji alfa = 0.05)
+
+**Vyhodnoceni pomoci**
+
+-   p-hodnoty p-hodnota \<= alfa =\> H0 zamitame, plati H1
+
+-   p-hodnota \> alfa =\> H0 nezamitame
+
+```{r}
+# priklad 
+
+## Pomoci jednovyberoveho t-testu na hladine vyznamnosti 5% rozhodnete,
+#   zda prumerna vyska policistu muze byt 180 cm
+
+# H0: vyska = 180 cm vs. H1: vyska != 180 cm (oboustranná alternativa)
+vyska <- Policie$height
+#t.test(sloupec, mu) mu - значение гипотезы H0 
+t.test(vyska, mu=180)
+  # p-hodnota 0.0965 > 0.05 => nezamitame H0
+  # Neprokazalo se, ze prumerna vyska policistu se lisi od 180 cm.
+  #   Muze byt 180 cm.
+```
+
+```{r}
+# "greater" — проверка на превышение (H1: mu > H0)
+# "less" — проверка на уменьшение (H1: mu < H0)
+
+# zda prumerna hmotnost policistu je mensi nez 80 kg.
+# H0 -  prumerna hmotnost policistu >= 80 kg
+# H1 - prumerna hmotnost policistu <=  80 kg.
+t.test(hmotnost, mu = 80, alternative = "less")
+```
+
+# Interval spolehlivosti pro prumer
+
+```{r}
+## Spoctete 95% interval spolehlivosti pro prumer vysky kdyz vite, 
+#  ze rozptyl vysky dospelych muzu je 49.
+vyska <- Policie$height
+
+# Rucni vypocet
+mn <- mean(vyska)
+sd <- sqrt(49)
+
+# a kdyby mi skutecny rozptyl nikdo nerekl?
+sd <- sd(vyska)
+
+n <- length(vyska)
+alpha <- 0.05
+q.n <- qnorm(1-alpha/2)
+
+# Dolni mez
+mn-q.n*sd/sqrt(n)
+# Horni mez
+mn+q.n*sd/sqrt(n)
+
+# vypocet pomoci funkce v knihovne DescTools
+MeanCI(vyska,sd=sd)
+
+#Spoctete 99%-ni interval spolehlivosti
+MeanCI(vyska , conf.level=0.99)
+```
+
+pomoci bootstrapu
+
+```{r}
+hp <- mtcars$hp
+
+boots <- list()
+B <- 10000
+for(i in 1:B) boots[[i]] <- sample(hp, replace=TRUE)
+  # bootstrapove vybery
+means <- unlist(lapply(boots, mean))
+  # bootstrapove prumery
+
+hist(means,col="honeydew2",xlab="Horsepower",
+     main="Histogram bootstrapovych prumeru")
+abline(v=mean(hp),lwd=3,col="navy")
+abline(v=quantile(means,probs=c(0.005,0.995)), lwd=3, col="red")
+c(mean=mean(hp), quantile(means,probs=c(0.005,0.995))) # zde je chyba, takže nereplikovat!
+  # bootstrapovy interval spolehlivosti
+
+
+# Pomoci funkce
+MeanCI(hp, method="boot", conf.level = 0.99) # toto je preferovaná verze
+BootCI(hp, FUN = mean, conf.level = 0.99) # toto je ještě preferovanější verze
+```
+
+Interval spolehlivosti pro rozdil prumeru
+
+```{r}
+### Interval spolehlivosti pro rozdil prumeru
+  
+## Lisi se od sebe prumerne hodnoty spotreby v zavislosti na typu prevodovky (promenna am)?
+# Vypoctete 95% interval spolehlivosti pro rozdil prumeru.
+am <- mtcars$am
+tapply(mpg,am,mean) # automatická převodovka = 0, manuální převodovka = 1
+MeanDiffCI(mpg ~ am) # pokud by byly průměry stejné, tak by do intervalu patřila nula
+
+  # druhy zpusob je pres dvouvyberovy t-test pro ruzne rozptyly
+  t.test(mpg ~ am)
+  # H0: skupiny jsou stejné
+  # H1: skupiny se liší
+
+# Co tento interval znamena 
+#   Se spolehlivosti 95% se skutecny rozdil dvojice prumeru nachazi
+#   v intervalu od -11.280194 do -3.209684
+# Lisi se tedy spotreba podle typu prevodovky?
+#   Interval neobsahuje nulu, ano lisi se.
+```
+
+Interval spolehlivosti pro pravdepodobnost (podil)
+
+```{r}
+### Interval spolehlivosti pro pravdepodobnost (podil)
+  
+## Spoctete 95% interval splehlivosti pro podil voyu s automatickou prevodovkou.
+am <- mtcars$am
+table(am)  
+  # hodnota 0 znaci automatickou prevodovku
+prop.table(table(am))
+  # odhad podilu vozu s automatickou prevodovkou
+
+# rucni vypocet
+p <- prop.table(table(am))[1]
+n <- length(am)
+alpha <- 0.05
+q.n <- qnorm(1-alpha/2)
+
+# dolni mez
+p - q.n*sqrt(p*(1-p)/n)
+# horni mez
+p + q.n*sqrt(p*(1-p)/n)
+
+# vypocet pomoc funkce z balicku DescTools
+BinomCI(table(am)[1], n, method ="wald")
+
+## Vypoctete 90% interval spolehlivosti pto motor ve tvaru V (promenna vs).
+# hodnota 0 je pro motor ve tvaru V
+
+```
+
+Interval spolehlivosti pro rozdil podilu
+
+```{r}
+### Interval spolehlivosti pro rozdil podilu
+
+## A je rozdil v tomto podilu podle typu motoru?
+vs <- mtcars$vs
+(tab <- table(am, vs))
+
+# vypocet 
+BinomDiffCI(x1 = tab[1,1], n1 = tab[1,1] + tab[1+2], x2 = tab[2,1], n2 = tab[2,1] + tab[2+2], method ="wald")
+
+```
+
+# Odhad rozdeleni
+
+```{r}
+# 1 kreslime histogram 
+hist(chol,col="azure", border="darkblue", main="Histogram pro hladinu cholesterolu", xlab="Cholesterol")
+
+# 2 pocitame sikmost 
+# s < 0 -> levostranne rozdeleni 
+# s = 0 -> simetricke rozdeleni 
+# s > 0 -> pravostranne rozdeleni 
+Skew(chol)
+
+# 3 pocitame spicatost 
+# s < 0 -> zaporna spicatost; platykurticke rozdeleni 
+# s = 0 -> nulova; mezokurticke rozdeleni 
+# s > 0 -> kladnal; letokurticke rozdeleni 
+Kurt(chol)
+```
+
+```{r}
+library(fitdistrplus)
+# Pomer sikmosti a spicatosti, k jakemu rozdeleni mam nejblize
+
+# 1. delame brutsrapovy vyber 
+# discrete=FALSE (spojité rozdělení), discrete=TRUE (diskrétní rozdělení)
+descdist(chol ,discrete=FALSE, boot=1000)
+
+# 2. a se divame k jakemu rozdeleni pomerancove puntiky jsou nejbliz 
+
+# zkusim normalni, logisticke a lognormalni
+(fit1 <- fitdist(chol,"norm"))
+(fit2 <- fitdist(chol,"logis"))
+(fit3 <- fitdist(chol,"lnorm"))
+
+# porovnani pomoci AIC a BIC kriterii
+data.frame(distr=c("Norm","Logis","Lognorm"),
+           AIC=c(fit1$aic,fit2$aic,fit3$aic),
+           BIC=c(fit1$bic,fit2$bic,fit3$bic)
+)
+
+# kde AIC a BIC maji nejmensi hodnoty, tam je to sprevne rozdeleni 
+
+#3. kontrola, jak jednotlivym rozdelenim sedi Q-Q plot
+PlotQQ(chol)
+PlotQQ(chol, qdist=function(p) qlogis(p,location=coef(fit2)[1],scale=coef(fit2)[2]))
+PlotQQ(chol, qdist=function(p) qlnorm(p,meanlog=coef(fit3)[1],sdlog=coef(fit3)[2]))
+```
